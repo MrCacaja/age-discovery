@@ -1,9 +1,10 @@
 use bevy::asset::AssetServer;
 use bevy::input::Input;
 use bevy::math::Vec3;
-use bevy::prelude::{KeyCode, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{KeyCode, Query, Res, With};
 use crate::{Camera2dBundle, Commands, default, OrthographicProjection, ScalingMode};
 use crate::game::general::living::player::{add_player, Player};
+use crate::game::general::physics::SelfPhysical;
 
 pub mod general;
 
@@ -12,10 +13,7 @@ pub fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
     add_player(commands, asset_server);
 }
 
-pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_transforms: Query<&mut Transform, With<Player>>) {
-    // TODO: as direções devem vir do jogador, sendo que deve haver um sistema para atualizar a posição
-    // de acordo com a direção e o input deve apenas fazer uma força de acordo com a direção e delta
-    // time deve ser implementado
+pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_physics: Query<&mut SelfPhysical, With<Player>>) {
     let mut directions = Vec3::ZERO;
 
     if keyboard_input.pressed(KeyCode::W) {
@@ -31,8 +29,8 @@ pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_transforms: Qu
         directions.x -= 1.;
     }
 
-    for mut player_transform in player_transforms.iter_mut() {
-        player_transform.translation += directions;
+    for mut physics in player_physics.iter_mut() {
+       physics.self_direction = directions;
     }
 }
 

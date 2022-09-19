@@ -7,8 +7,8 @@ use bevy::render::camera::ScalingMode;
 use bevy::render::texture::ImageSettings;
 use bevy::utils::default;
 use crate::game::general::Name;
-use crate::game::general::living::{Person};
 use crate::game::{read_input, setup_game};
+use crate::game::general::physics::{direction_react, update_sprites};
 
 fn main() {
     App::new()
@@ -16,5 +16,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup_game)
         .add_system(read_input)
+        .add_system(direction_react)
+        .add_system(update_sprites)
         .run();
 }
