@@ -3,21 +3,40 @@ use bevy::ecs::component::Component;
 use bevy::prelude::{Query, Res, TextureAtlasSprite, Transform};
 use bevy::ecs::bundle::Bundle;
 use bevy::time::Time;
+use bevy_ecs_ldtk::{EntityInstance, LdtkEntity};
 use bevy_inspector_egui::Inspectable;
+use crate::default;
 use crate::game::general::MultipleSided;
 
 #[derive(Default, Component, Inspectable)]
 pub struct Physical {
     pub direction: Vec3,
-    pub position: Vec3,
     pub weight: f32,
     pub acceleration: f32,
+}
+
+impl From<EntityInstance> for Physical {
+    fn from(entity_instance: EntityInstance) -> Physical {
+        match entity_instance.identifier.as_str() {
+            "Player" => Physical { weight: 2.5, ..default() },
+            _ => Physical {..default()}
+        }
+    }
 }
 
 #[derive(Component, Inspectable)]
 pub struct SelfPhysical {
     pub direction: Vec3,
     pub speed: f32,
+}
+
+impl From<EntityInstance> for SelfPhysical {
+    fn from(entity_instance: EntityInstance) -> SelfPhysical {
+        match entity_instance.identifier.as_str() {
+            "Player" => SelfPhysical { speed: 50., ..default() },
+            _ => SelfPhysical {..default()}
+        }
+    }
 }
 
 impl Default for SelfPhysical {
@@ -29,16 +48,16 @@ impl Default for SelfPhysical {
     }
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle, Default, LdtkEntity)]
 pub struct SelfPhysicalBundle {
+    #[from_entity_instance]
     pub physical: Physical,
+    #[from_entity_instance]
     pub self_physical: SelfPhysical,
 }
 
-pub fn update_sprites(mut transforms: Query<(&mut Transform, &Physical, Option<&MultipleSided>, Option<&mut TextureAtlasSprite>, Option<&SelfPhysical>)>) {
-    for (mut transform, physical, multiple_sided, atlas_sprite, self_physical) in transforms.iter_mut() {
-        transform.translation = physical.position;
-
+pub fn update_sprites(mut transforms: Query<(&Physical, Option<&MultipleSided>, Option<&mut TextureAtlasSprite>, Option<&SelfPhysical>)>) {
+    for (physical, multiple_sided, atlas_sprite, self_physical) in transforms.iter_mut() {
         if let Some(_) = multiple_sided {
             if let Some(mut atlas_sprite) = atlas_sprite {
                 update_atlas_sprites(physical, self_physical, &mut atlas_sprite);
@@ -79,19 +98,21 @@ fn update_atlas_sprites(physical: &Physical, self_physical: Option<&SelfPhysical
     }
 }
 
-pub fn direction_react(time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>)>) {
-    for (mut physical, self_physical) in entities.iter_mut() {
-        if let Some(self_physical) = self_physical {
-            if self_physical.speed > physical.acceleration {
-                physical.position += self_physical.direction * time.delta_seconds() * self_physical.speed;
+pub fn direction_react(time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>, Option<&mut Transform>)>) {
+    for (mut physical, self_physical, transform) in entities.iter_mut() {
+        if let Some(mut transform) = transform {
+            if let Some(self_physical) = self_physical {
+                if self_physical.speed > physical.acceleration {
+                    transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
+                }
             }
+            physical.direction = physical.direction.normalize_or_zero();
+            transform.translation += physical.direction * time.delta_seconds() * physical.acceleration;
+            physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
+        } else {
+            physical.direction = physical.direction.normalize_or_zero();
+            physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
         }
 
-        physical.direction = physical.direction.normalize_or_zero();
-        let direction = physical.direction;
-        let acceleration = physical.acceleration;
-
-        physical.position += direction * time.delta_seconds() * acceleration;
-        physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
     }
 }

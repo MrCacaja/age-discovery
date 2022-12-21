@@ -1,12 +1,12 @@
 use bevy::app::Plugin;
-use bevy::asset::{Assets, AssetServer};
+use bevy::asset::AssetServer;
 use bevy::input::Input;
 use bevy::math::Vec3;
-use bevy::prelude::{Camera, KeyCode, Query, Res, ResMut, TextureAtlas, Transform, With};
+use bevy::prelude::{Camera, KeyCode, Query, Res, Transform, With, Without};
 use bevy::ecs::component::Component;
 use bevy_ecs_ldtk::LdtkWorldBundle;
 use crate::{App, Camera2dBundle, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
-use crate::game::general::living::player::{add_player, Player};
+use crate::game::general::living::player::Player;
 use crate::game::general::physics::SelfPhysical;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
 
@@ -14,7 +14,7 @@ pub mod general;
 
 pub struct DebugPlugin;
 
-#[derive(Default, Component)]
+#[derive(Default, Component, Clone)]
 pub struct CameraTarget;
 
 impl Plugin for DebugPlugin {
@@ -26,10 +26,9 @@ impl Plugin for DebugPlugin {
     }
 }
 
-pub fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>, texture_atlases: ResMut<Assets<TextureAtlas>>) {
+pub fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
     setup_view(&mut commands);
     setup_tilemap(&mut commands, &asset_server);
-    add_player(commands, asset_server, texture_atlases);
 }
 
 pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_physics: Query<&mut SelfPhysical, With<Player>>) {
@@ -53,11 +52,15 @@ pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_physics: Query
     }
 }
 
-pub fn camera_follow(mut camera_targets: Query<&mut Physical, With<CameraTarget>>, mut cameras: Query<&mut Transform, With<Camera>>) {
-    let target = camera_targets.get_single_mut().expect("There's more than one or no camera target");
-    let mut camera = cameras.get_single_mut().expect("There's more than one or no camera");
+pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, mut cameras: Query<&mut Transform, (With<Camera>, Without<CameraTarget>)>) {
+    match camera_targets.get_single() {
+        Ok(target) => {
+            let mut camera = cameras.get_single_mut().unwrap();
 
-    camera.translation = target.position;
+            camera.translation = target.translation;
+        }
+        _ => {}
+    };
 }
 
 fn setup_tilemap(commands: &mut Commands, asset_server: &Res<AssetServer>) {
