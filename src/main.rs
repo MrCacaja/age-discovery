@@ -11,7 +11,8 @@ use bevy_ecs_ldtk::app::RegisterLdtkObjects;
 use crate::game::general::Name;
 use crate::game::{camera_follow, DebugPlugin, read_input, setup_game};
 use crate::game::general::living::player::PlayerBundle;
-use crate::game::general::physics::{direction_react, Physical, update_sprites};
+use crate::game::general::physics::{Collider, direction_react, Physical, update_collider_pos, update_sprites};
+use crate::game::general::props::{RockBundle, TreeStumpBundle};
 
 fn main() {
     App::new()
@@ -21,10 +22,13 @@ fn main() {
         .add_plugin(DebugPlugin)
         .insert_resource(LevelSelection::Index(0))
         .register_ldtk_entity::<PlayerBundle>("Player")
+        .register_ldtk_entity::<TreeStumpBundle>("Tree_Stump")
+        .register_ldtk_entity::<RockBundle>("Rock")
         .add_startup_system(setup_game)
         .add_system(read_input)
         .add_system(camera_follow)
         .add_system(direction_react)
         .add_system(update_sprites)
+        .add_system(update_collider_pos)
         .run();
 }

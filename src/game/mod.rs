@@ -2,10 +2,11 @@ use bevy::app::Plugin;
 use bevy::asset::AssetServer;
 use bevy::input::Input;
 use bevy::math::Vec3;
-use bevy::prelude::{Camera, KeyCode, Query, Res, Transform, With, Without};
+use bevy::prelude::{Added, Camera, KeyCode, Query, Res, Transform, With, Without};
 use bevy::ecs::component::Component;
+use bevy::sprite::{Anchor, Sprite, SpriteSheetBundle, TextureAtlasSprite};
 use bevy_ecs_ldtk::LdtkWorldBundle;
-use crate::{App, Camera2dBundle, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
+use crate::{App, Camera2dBundle, Collider, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
 use crate::game::general::living::player::Player;
 use crate::game::general::physics::SelfPhysical;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
@@ -22,7 +23,8 @@ impl Plugin for DebugPlugin {
         app.add_plugin(WorldInspectorPlugin::new())
             .register_inspectable::<Name>()
             .register_inspectable::<Physical>()
-            .register_inspectable::<SelfPhysical>();
+            .register_inspectable::<SelfPhysical>()
+            .register_inspectable::<Collider>();
     }
 }
 
