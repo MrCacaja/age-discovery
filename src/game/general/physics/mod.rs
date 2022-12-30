@@ -163,35 +163,46 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
         let mut direction = physical.direction;
         direction += self_physical.direction;
         let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
-        let future_collider_pos = Vec2::new(direction.x + collider_pos.x, direction.y + collider_pos.y);
-        if future_collider_pos.x != 0. || future_collider_pos.y != 0. {
-            let target_collider_pos = Vec2 {x: target_transform.translation.x + target_collider.offset.x, y: target_transform.translation.y + target_collider.offset.y};
-            let target_collider_len = Vec2::new(
-                target_collider_pos.x + target_collider.size.x, target_collider_pos.y + target_collider.size.y
-            );
-            let collider_len = future_collider_pos + collider.size;
-            if !(collider_len.y < target_collider_pos.y || future_collider_pos.y > target_collider_len.y || collider_len.x < target_collider_pos.x || future_collider_pos.x > target_collider_len.x) {
-                physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
-                physical.direction = Vec3::ZERO;
-                self_physical.direction = Vec3::ZERO;
-            }
+        let future_collider_pos_x = Vec2::new(direction.x + collider_pos.x, collider_pos.y);
+        if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
+            physical.direction.x = 0.;
+            self_physical.direction.x = 0.;
+        }
+        let future_collider_pos_y = Vec2::new(collider_pos.x, direction.y + collider_pos.y);
+        if check_future(future_collider_pos_y, collider, &target_transform, target_collider) {
+            physical.direction.y = 0.;
+            self_physical.direction.y = 0.;
         }
     }
 
     fn collide(mut physical: Mut<'_, Physical, >, collider: &Collider, transform: Mut<'_, Transform, >,
                target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
         let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
-        let future_collider_pos = Vec2::new(physical.direction.x + collider_pos.x, physical.direction.y + collider_pos.y);
+        let future_collider_pos_x = Vec2::new(physical.direction.x + collider_pos.x, collider_pos.y);
+        if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
+            physical.direction.x = 0.;
+        }
+        let future_collider_pos_y = Vec2::new(collider_pos.x, physical.direction.y + collider_pos.y);
+        if check_future(future_collider_pos_y, collider, &target_transform, target_collider) {
+            physical.direction.y = 0.;
+        }
+    }
+
+    fn check_future(future_collider_pos: Vec2, collider: &Collider,
+                    target_transform: &Mut<'_, Transform, >, target_collider: &Collider) -> bool {
         if future_collider_pos.x != 0. || future_collider_pos.y != 0. {
             let target_collider_pos = Vec2 {x: target_transform.translation.x + target_collider.offset.x, y: target_transform.translation.y + target_collider.offset.y};
             let target_collider_len = Vec2::new(
                 target_collider_pos.x + target_collider.size.x, target_collider_pos.y + target_collider.size.y
             );
             let collider_len = future_collider_pos + collider.size;
-            if !(collider_len.y < target_collider_pos.y || future_collider_pos.y > target_collider_len.y || collider_len.x < target_collider_pos.x || future_collider_pos.x > target_collider_len.x) {
-                physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
-                physical.direction = Vec3::ZERO;
-            }
+            return !(
+                collider_len.y          <   target_collider_pos.y   ||
+                future_collider_pos.y   >   target_collider_len.y   ||
+                collider_len.x          <   target_collider_pos.x   ||
+                future_collider_pos.x   >   target_collider_len.x
+            );
         }
+        return false;
     }
 }
