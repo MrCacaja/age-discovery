@@ -2,9 +2,8 @@ use bevy::app::Plugin;
 use bevy::asset::AssetServer;
 use bevy::input::Input;
 use bevy::math::Vec3;
-use bevy::prelude::{Added, Camera, KeyCode, Query, Res, Transform, With, Without};
+use bevy::prelude::{Camera, KeyCode, Query, Res, Transform, With, Without};
 use bevy::ecs::component::Component;
-use bevy::sprite::{Anchor, Sprite, SpriteSheetBundle, TextureAtlasSprite};
 use bevy_ecs_ldtk::LdtkWorldBundle;
 use crate::{App, Camera2dBundle, Collider, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
 use crate::game::general::living::player::Player;
@@ -60,6 +59,7 @@ pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, 
             let mut camera = cameras.get_single_mut().unwrap();
 
             camera.translation = target.translation;
+            camera.translation.z = 1000.;
         }
         _ => {}
     };
