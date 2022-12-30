@@ -1,6 +1,6 @@
-use bevy::math::Vec3;
+use bevy::math::{Vec2, Vec3};
 use bevy::ecs::component::Component;
-use bevy::prelude::{Query, Res, TextureAtlasSprite, Transform};
+use bevy::prelude::{Mut, Query, Res, TextureAtlasSprite, Transform};
 use bevy::ecs::bundle::Bundle;
 use bevy::time::Time;
 use bevy_ecs_ldtk::{EntityInstance, LdtkEntity};
@@ -20,6 +20,31 @@ impl From<EntityInstance> for Physical {
         match entity_instance.identifier.as_str() {
             "Player" => Physical { weight: 2.5, ..default() },
             _ => Physical {..default()}
+        }
+    }
+}
+
+#[derive(Component, Inspectable)]
+pub struct Collider {
+    pub size: Vec2,
+    pub offset: Vec2
+}
+
+impl Default for Collider {
+    fn default() -> Self {
+        Self {
+            size: Vec2::new(16., 10.),
+            offset: Vec2::ZERO
+        }
+    }
+}
+
+impl From<EntityInstance> for Collider {
+    fn from(entity_instance: EntityInstance) -> Collider {
+        match entity_instance.identifier.as_str() {
+            "Player" => Collider { offset: Vec2::new(0., -8.), size: Vec2::new(16., 4.5), ..default() },
+            "Rock" => Collider { offset: Vec2::new(-6., -8.), size: Vec2::new(28., 20.), ..default() },
+            _ => Collider {..default()}
         }
     }
 }
@@ -98,21 +123,86 @@ fn update_atlas_sprites(physical: &Physical, self_physical: Option<&SelfPhysical
     }
 }
 
-pub fn direction_react(time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>, Option<&mut Transform>)>) {
-    for (mut physical, self_physical, transform) in entities.iter_mut() {
-        if let Some(mut transform) = transform {
-            if let Some(self_physical) = self_physical {
-                if self_physical.speed > physical.acceleration {
-                    transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
-                }
+pub fn direction_react(
+    time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>, &mut Transform)>,
+) {
+    for (mut physical, self_physical, mut transform) in entities.iter_mut() {
+        if let Some(self_physical) = self_physical {
+            if self_physical.speed > physical.acceleration {
+                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
             }
-            physical.direction = physical.direction.normalize_or_zero();
-            transform.translation += physical.direction * time.delta_seconds() * physical.acceleration;
-            physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
-        } else {
-            physical.direction = physical.direction.normalize_or_zero();
-            physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
         }
 
+        physical.direction = physical.direction.normalize_or_zero();
+        transform.translation += physical.direction * time.delta_seconds() * physical.acceleration;
+        physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
+    }
+}
+
+pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Option<&mut SelfPhysical>, &mut Transform, &Collider)>) {
+    let mut combinations = colliders.iter_combinations_mut();
+    while let Some([(physical, self_physical, transform, collider), (target_physical, target_self_physical, target_transform, target_collider)]) = combinations.fetch_next() {
+        if let Some(physical) = physical {
+            if let Some(self_physical) = self_physical {
+                collide_self(physical, self_physical, collider, transform, target_transform, target_collider);
+            } else {
+                collide(physical, collider, transform, target_transform, target_collider);
+            }
+        } else if let Some(target_physical) = target_physical {
+            if let Some(target_self_physical) = target_self_physical {
+                collide_self(target_physical, target_self_physical, target_collider, target_transform, transform, collider);
+            } else {
+                collide(target_physical, target_collider, target_transform, transform, collider);
+            }
+        }
+    }
+
+    fn collide_self(mut physical: Mut<'_, Physical, >, mut self_physical: Mut<'_, SelfPhysical, >,
+               collider: &Collider, transform: Mut<'_, Transform, >,
+               target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
+        let mut direction = physical.direction;
+        direction += self_physical.direction;
+        let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
+        let future_collider_pos_x = Vec2::new(direction.x + collider_pos.x, collider_pos.y);
+        if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
+            physical.direction.x = 0.;
+            self_physical.direction.x = 0.;
+        }
+        let future_collider_pos_y = Vec2::new(collider_pos.x, direction.y + collider_pos.y);
+        if check_future(future_collider_pos_y, collider, &target_transform, target_collider) {
+            physical.direction.y = 0.;
+            self_physical.direction.y = 0.;
+        }
+    }
+
+    fn collide(mut physical: Mut<'_, Physical, >, collider: &Collider, transform: Mut<'_, Transform, >,
+               target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
+        let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
+        let future_collider_pos_x = Vec2::new(physical.direction.x + collider_pos.x, collider_pos.y);
+        if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
+            physical.direction.x = 0.;
+        }
+        let future_collider_pos_y = Vec2::new(collider_pos.x, physical.direction.y + collider_pos.y);
+        if check_future(future_collider_pos_y, collider, &target_transform, target_collider) {
+            physical.direction.y = 0.;
+        }
+    }
+
+    fn check_future(future_collider_pos: Vec2, collider: &Collider,
+                    target_transform: &Mut<'_, Transform, >, target_collider: &Collider) -> bool {
+        if future_collider_pos.x != 0. || future_collider_pos.y != 0. {
+            let target_collider_pos = Vec2 {x: target_transform.translation.x + target_collider.offset.x, y: target_transform.translation.y + target_collider.offset.y};
+            let target_collider_len = Vec2::new(
+                target_collider_pos.x + target_collider.size.x, target_collider_pos.y + target_collider.size.y
+            );
+            let collider_len = future_collider_pos + collider.size;
+            return !(
+                collider_len.y          <   target_collider_pos.y   ||
+                future_collider_pos.y   >   target_collider_len.y   ||
+                collider_len.x          <   target_collider_pos.x   ||
+                future_collider_pos.x   >   target_collider_len.x
+            );
+        }
+        return false;
     }
 }

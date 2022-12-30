@@ -5,7 +5,7 @@ use bevy::math::Vec3;
 use bevy::prelude::{Camera, KeyCode, Query, Res, Transform, With, Without};
 use bevy::ecs::component::Component;
 use bevy_ecs_ldtk::LdtkWorldBundle;
-use crate::{App, Camera2dBundle, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
+use crate::{App, Camera2dBundle, Collider, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
 use crate::game::general::living::player::Player;
 use crate::game::general::physics::SelfPhysical;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
@@ -22,7 +22,8 @@ impl Plugin for DebugPlugin {
         app.add_plugin(WorldInspectorPlugin::new())
             .register_inspectable::<Name>()
             .register_inspectable::<Physical>()
-            .register_inspectable::<SelfPhysical>();
+            .register_inspectable::<SelfPhysical>()
+            .register_inspectable::<Collider>();
     }
 }
 
@@ -58,6 +59,7 @@ pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, 
             let mut camera = cameras.get_single_mut().unwrap();
 
             camera.translation = target.translation;
+            camera.translation.z = 1000.;
         }
         _ => {}
     };
