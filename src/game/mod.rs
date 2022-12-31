@@ -7,7 +7,7 @@ use bevy::ecs::component::Component;
 use bevy_ecs_ldtk::LdtkWorldBundle;
 use crate::{App, Camera2dBundle, Collider, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
 use crate::game::general::living::player::Player;
-use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysical};
+use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysical, SpriteZone};
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
 
 pub mod general;
@@ -24,6 +24,7 @@ impl Plugin for DebugPlugin {
             .register_inspectable::<Physical>()
             .register_inspectable::<SelfPhysical>()
             .register_inspectable::<Collider>()
+            .register_inspectable::<SpriteZone>()
             .register_inspectable::<MultipleMovementState>()
             .register_inspectable::<MultipleSided>();
     }

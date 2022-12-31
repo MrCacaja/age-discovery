@@ -4,6 +4,7 @@ use bevy::prelude::SpriteSheetBundle;
 use bevy_inspector_egui::Inspectable;
 use bevy_ecs_ldtk::LdtkEntity;
 use crate::Collider;
+use crate::game::general::physics::SpriteZone;
 
 #[derive(Default, Component, Inspectable)]
 pub struct Prop;
@@ -14,6 +15,9 @@ pub struct PropBundle {
 
     #[from_entity_instance]
     pub collider: Collider,
+
+    #[from_entity_instance]
+    pub sprite_zone: SpriteZone,
 
     #[sprite_sheet_bundle]
     #[bundle]

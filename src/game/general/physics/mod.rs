@@ -57,27 +57,46 @@ impl From<EntityInstance> for Physical {
     }
 }
 
-#[derive(Component, Inspectable)]
-pub struct Collider {
+#[derive(Inspectable)]
+pub struct TransformZone {
     pub size: Vec2,
     pub offset: Vec2
 }
 
+#[derive(Component, Inspectable)]
+pub struct Collider(TransformZone);
+
 impl Default for Collider {
     fn default() -> Self {
-        Self {
-            size: Vec2::new(16., 10.),
-            offset: Vec2::ZERO
-        }
+        Self(TransformZone {size: Vec2::new(16., 10.), offset: Vec2::ZERO})
     }
 }
 
 impl From<EntityInstance> for Collider {
     fn from(entity_instance: EntityInstance) -> Collider {
         match entity_instance.identifier.as_str() {
-            "Player" => Collider { offset: Vec2::new(0., -8.), size: Vec2::new(16., 4.5), ..default() },
-            "Rock" => Collider { offset: Vec2::new(-6., -8.), size: Vec2::new(28., 20.), ..default() },
+            "Player" => Collider(TransformZone {size: Vec2::new(16., 4.5), offset: Vec2::new(0., -8.)}),
+            "Rock" => Collider(TransformZone {size: Vec2::new(28., 20.), offset: Vec2::new(-6., -8.)}),
             _ => Collider {..default()}
+        }
+    }
+}
+
+#[derive(Component, Inspectable)]
+pub struct SpriteZone(TransformZone);
+
+impl Default for SpriteZone {
+    fn default() -> Self {
+        Self(TransformZone {size: Vec2::new(16., 16.), offset: Vec2::ZERO})
+    }
+}
+
+impl From<EntityInstance> for SpriteZone {
+    fn from(entity_instance: EntityInstance) -> SpriteZone {
+        match entity_instance.identifier.as_str() {
+            "Player" => SpriteZone(TransformZone {size: Vec2::new(16., 32.), offset: Vec2::new(0., -8.)}),
+            "Rock" => SpriteZone(TransformZone {size: Vec2::new(32., 32.), offset: Vec2::new(-6., -8.)}),
+            _ => SpriteZone {..default()}
         }
     }
 }
@@ -332,7 +351,7 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
                target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
         let mut direction = physical.direction;
         direction += self_physical.direction;
-        let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
+        let collider_pos = Vec2 {x: transform.translation.x + collider.0.offset.x, y: transform.translation.y + collider.0.offset.y};
         let future_collider_pos_x = Vec2::new(direction.x + collider_pos.x, collider_pos.y);
         if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
             physical.direction.x = 0.;
@@ -347,7 +366,7 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
 
     fn collide(mut physical: Mut<'_, Physical, >, collider: &Collider, transform: Mut<'_, Transform, >,
                target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
-        let collider_pos = Vec2 {x: transform.translation.x + collider.offset.x, y: transform.translation.y + collider.offset.y};
+        let collider_pos = Vec2 {x: transform.translation.x + collider.0.offset.x, y: transform.translation.y + collider.0.offset.y};
         let future_collider_pos_x = Vec2::new(physical.direction.x + collider_pos.x, collider_pos.y);
         if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
             physical.direction.x = 0.;
@@ -361,11 +380,14 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
     fn check_future(future_collider_pos: Vec2, collider: &Collider,
                     target_transform: &Mut<'_, Transform, >, target_collider: &Collider) -> bool {
         if future_collider_pos.x != 0. || future_collider_pos.y != 0. {
-            let target_collider_pos = Vec2 {x: target_transform.translation.x + target_collider.offset.x, y: target_transform.translation.y + target_collider.offset.y};
+            let target_collider_pos = Vec2 {
+                x: target_transform.translation.x + target_collider.0.offset.x,
+                y: target_transform.translation.y + target_collider.0.offset.y
+            };
             let target_collider_len = Vec2::new(
-                target_collider_pos.x + target_collider.size.x, target_collider_pos.y + target_collider.size.y
+                target_collider_pos.x + target_collider.0.size.x, target_collider_pos.y + target_collider.0.size.y
             );
-            let collider_len = future_collider_pos + collider.size;
+            let collider_len = future_collider_pos + collider.0.size;
             return !(
                 collider_len.y          <   target_collider_pos.y   ||
                 future_collider_pos.y   >   target_collider_len.y   ||
@@ -374,5 +396,38 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
             );
         }
         return false;
+    }
+}
+
+pub fn overlap_sprite_zones(mut sprite_zones: Query<(&SpriteZone, &mut Transform)>) {
+    let mut combinations = sprite_zones.iter_combinations_mut();
+    while let Some([(a_sprite_zone, mut a_transform), (b_sprite_zone, mut b_transform)]) = combinations.fetch_next() {
+        let a_sprite_zone_pos = Vec2 {
+            x: a_transform.translation.x + a_sprite_zone.0.offset.x,
+            y: a_transform.translation.y + a_sprite_zone.0.offset.y
+        };
+        let a_sprite_zone_len = Vec2::new(
+            a_sprite_zone_pos.x + a_sprite_zone.0.size.x, a_sprite_zone_pos.y + a_sprite_zone.0.size.y
+        );
+        let b_sprite_zone_pos = Vec2 {
+            x: b_transform.translation.x + b_sprite_zone.0.offset.x,
+            y: b_transform.translation.y + b_sprite_zone.0.offset.y
+        };
+        let b_sprite_zone_len = Vec2::new(
+            b_sprite_zone_pos.x + b_sprite_zone.0.size.x, b_sprite_zone_pos.y + b_sprite_zone.0.size.y
+        );
+        let collided = !(
+                a_sprite_zone_len.y   <   b_sprite_zone_pos.y   ||
+                a_sprite_zone_pos.y   >   b_sprite_zone_len.y   ||
+                a_sprite_zone_len.x   <   b_sprite_zone_pos.x   ||
+                a_sprite_zone_pos.x   >   b_sprite_zone_len.x
+        );
+        if collided {
+            if a_sprite_zone_pos.y < b_sprite_zone_pos.y {
+                a_transform.translation.z = b_transform.translation.z + 0.1;
+            } else {
+                b_transform.translation.z = a_transform.translation.z + 0.1;
+            }
+        }
     }
 }

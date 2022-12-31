@@ -12,7 +12,7 @@ use bevy_ecs_ldtk::app::RegisterLdtkObjects;
 use crate::game::general::Name;
 use crate::game::{camera_follow, DebugPlugin, read_input, setup_game};
 use crate::game::general::living::player::PlayerBundle;
-use crate::game::general::physics::{Collider, collider_direction_react, direction_react, MovementSpriteTimer, Physical, update_movement_sided_sprite, update_movement_state_by_direction, update_sided_sprite, update_sideds_by_direction};
+use crate::game::general::physics::{Collider, collider_direction_react, direction_react, MovementSpriteTimer, overlap_sprite_zones, Physical, update_movement_sided_sprite, update_movement_state_by_direction, update_sided_sprite, update_sideds_by_direction};
 use crate::game::general::props::{RockBundle, TreeStumpBundle};
 
 // const GENERAL_SPRITE_SHEET_COLS: usize = 3;
@@ -57,6 +57,7 @@ fn main() {
         .add_system(read_input)
         .add_system(collider_direction_react.after(read_input))
         .add_system(direction_react.after(collider_direction_react))
+        .add_system(overlap_sprite_zones.after(direction_react))
         .add_system(update_movement_state_by_direction.after(collider_direction_react))
         .add_system(update_movement_sided_sprite.after(update_movement_state_by_direction))
         .add_system(update_sideds_by_direction.after(direction_react))
