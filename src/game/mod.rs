@@ -9,6 +9,7 @@ use crate::{App, Camera2dBundle, Collider, Commands, default, Name, Orthographic
 use crate::game::general::living::player::Player;
 use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysical, SpriteZone};
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
+use bevy_pixel_camera::PixelCameraBundle;
 
 pub mod general;
 
@@ -60,9 +61,8 @@ pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, 
     match camera_targets.get_single() {
         Ok(target) => {
             let mut camera = cameras.get_single_mut().unwrap();
-
-            camera.translation = target.translation;
-            camera.translation.z = 1000.;
+            camera.translation.x = target.translation.x;
+            camera.translation.y = target.translation.y;
         }
         _ => {}
     };
@@ -76,11 +76,5 @@ fn setup_tilemap(commands: &mut Commands, asset_server: &Res<AssetServer>) {
 }
 
 fn setup_view(commands: &mut Commands) {
-    commands.spawn(Camera2dBundle {
-        projection: OrthographicProjection {
-            scaling_mode: ScalingMode::Auto { min_width: 192., min_height: 72. },
-            ..default()
-        },
-        ..default()
-    });
+    commands.spawn(PixelCameraBundle::from_resolution(192, 108));
 }

@@ -2,12 +2,14 @@ mod game;
 
 use bevy::app::{App, PluginGroup};
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Commands, ImagePlugin, IntoSystemDescriptor, OrthographicProjection};
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::prelude::{Camera2dBundle, Commands, ImagePlugin, IntoSystemDescriptor, Msaa, OrthographicProjection};
 use bevy::render::camera::ScalingMode;
 use bevy::time::{Timer, TimerMode};
 use bevy::utils::default;
 use bevy_ecs_ldtk::{LdtkPlugin, LevelSelection};
 use bevy_ecs_ldtk::app::RegisterLdtkObjects;
+use bevy_pixel_camera::PixelCameraPlugin;
 use crate::game::general::Name;
 use crate::game::{camera_follow, DebugPlugin, read_input, setup_game};
 use crate::game::general::living::player::PlayerBundle;
@@ -44,8 +46,12 @@ const MOB_SIDE_WALK_END: usize = MOB_SIDE_WALK_START + 1;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugin(PixelCameraPlugin)
         .add_plugin(LdtkPlugin)
         .add_plugin(DebugPlugin)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .insert_resource(Msaa {samples: 1})
         .insert_resource(MovementSpriteTimer{timer: Timer::from_seconds(0.2, TimerMode::Repeating)})
         .insert_resource(LevelSelection::Index(0))
         .register_ldtk_entity::<PlayerBundle>("Player")

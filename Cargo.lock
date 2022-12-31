@@ -37,6 +37,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_ecs_ldtk",
+ "bevy_pixel_camera",
 ]
 
 [[package]]
@@ -672,6 +673,15 @@ dependencies = [
  "bitflags",
  "bytemuck",
  "radsort",
+]
+
+[[package]]
+name = "bevy_pixel_camera"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "909788182141bd26ec0a2eca270b8323b80bf2d60af67b60cc729af3b2038a85"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
