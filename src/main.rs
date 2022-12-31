@@ -1,11 +1,10 @@
 mod game;
 
-use bevy::app::{App};
+use bevy::app::{App, PluginGroup};
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Commands, OrthographicProjection, ParallelSystemDescriptorCoercion};
+use bevy::prelude::{Camera2dBundle, Commands, ImagePlugin, IntoSystemDescriptor, OrthographicProjection};
 use bevy::render::camera::ScalingMode;
-use bevy::render::texture::ImageSettings;
-use bevy::time::Timer;
+use bevy::time::{Timer, TimerMode};
 use bevy::utils::default;
 use bevy_ecs_ldtk::{LdtkPlugin, LevelSelection};
 use bevy_ecs_ldtk::app::RegisterLdtkObjects;
@@ -44,11 +43,10 @@ const MOB_SIDE_WALK_END: usize = MOB_SIDE_WALK_START + 1;
 
 fn main() {
     App::new()
-        .insert_resource(ImageSettings::default_nearest())
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugin(LdtkPlugin)
         .add_plugin(DebugPlugin)
-        .insert_resource(MovementSpriteTimer{timer: Timer::from_seconds(0.2, true)})
+        .insert_resource(MovementSpriteTimer{timer: Timer::from_seconds(0.2, TimerMode::Repeating)})
         .insert_resource(LevelSelection::Index(0))
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<TreeStumpBundle>("Tree_Stump")

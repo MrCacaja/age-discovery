@@ -2,6 +2,7 @@ use bevy::math::{Vec2, Vec3};
 use bevy::ecs::component::Component;
 use bevy::prelude::{Mut, Query, Res, ResMut, TextureAtlasSprite, Transform, Without};
 use bevy::ecs::bundle::Bundle;
+use bevy::ecs::system::Resource;
 use bevy::time::{Time, Timer};
 use bevy_ecs_ldtk::{EntityInstance, LdtkEntity};
 use bevy_inspector_egui::Inspectable;
@@ -37,6 +38,7 @@ pub struct MultipleMovementState {
     used_first: bool
 }
 
+#[derive(Default, Resource)]
 pub struct MovementSpriteTimer {
     pub timer: Timer
 }

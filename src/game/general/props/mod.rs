@@ -9,7 +9,7 @@ use crate::game::general::physics::SpriteZone;
 #[derive(Default, Component, Inspectable)]
 pub struct Prop;
 
-#[derive(Default, Component, Bundle, LdtkEntity)]
+#[derive(Default, Bundle, LdtkEntity)]
 pub struct PropBundle {
     pub prop: Prop,
 
@@ -25,7 +25,7 @@ pub struct PropBundle {
 }
 
 
-#[derive(Default, Component, Bundle, LdtkEntity)]
+#[derive(Default, Bundle, LdtkEntity)]
 pub struct TreeStumpBundle {
     #[ldtk_entity]
     #[bundle]
@@ -33,7 +33,7 @@ pub struct TreeStumpBundle {
 }
 
 
-#[derive(Default, Component, Bundle, LdtkEntity)]
+#[derive(Default, Bundle, LdtkEntity)]
 pub struct RockBundle {
     #[ldtk_entity]
     #[bundle]

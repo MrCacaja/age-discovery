@@ -69,14 +69,14 @@ pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, 
 }
 
 fn setup_tilemap(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    commands.spawn_bundle(LdtkWorldBundle {
+    commands.spawn(LdtkWorldBundle {
         ldtk_handle: asset_server.load("tilemaps/simple-forest.ldtk"),
         ..default()
     });
 }
 
 fn setup_view(commands: &mut Commands) {
-    commands.spawn_bundle(Camera2dBundle {
+    commands.spawn(Camera2dBundle {
         projection: OrthographicProjection {
             scaling_mode: ScalingMode::Auto { min_width: 192., min_height: 72. },
             ..default()
