@@ -133,9 +133,9 @@
 			"renderMode": "Tile",
 			"showName": true,
 			"tilesetId": 7,
-			"tileId": 1,
+			"tileId": 0,
 			"tileRenderMode": "FitInside",
-			"tileRect": { "tilesetUid": 7, "x": 16, "y": 0, "w": 16, "h": 32 },
+			"tileRect": { "tilesetUid": 7, "x": 0, "y": 0, "w": 16, "h": 32 },
 			"nineSliceBorders": [],
 			"maxCount": 1,
 			"limitScope": "PerLevel",
@@ -224,14 +224,14 @@
 			}
 		},
 		{
-			"__cWid": 3,
-			"__cHei": 2,
+			"__cWid": 5,
+			"__cHei": 6,
 			"identifier": "Player",
 			"uid": 7,
 			"relPath": "../sprites/elf/texture.png",
 			"embedAtlas": null,
-			"pxWid": 48,
-			"pxHei": 32,
+			"pxWid": 80,
+			"pxHei": 96,
 			"tileGridSize": 16,
 			"spacing": 0,
 			"padding": 0,
@@ -240,7 +240,10 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": { "opaqueTiles": "000000", "averageColors": "a983b983b461b784b884b884" }
+			"cachedPixelData": {
+				"opaqueTiles": "000000000000000000000000000000",
+				"averageColors": "b983a9839983a9830000a884b884b88498830000988388837983877289838682878287828784a784b461a4619361a4620000a884b884b884a7830000"
+			}
 		},
 		{
 			"__cWid": 16,
@@ -316,7 +319,7 @@
 							"__grid": [6,7],
 							"__pivot": [0,0],
 							"__tags": [],
-							"__tile": { "tilesetUid": 7, "x": 16, "y": 0, "w": 16, "h": 32 },
+							"__tile": { "tilesetUid": 7, "x": 0, "y": 0, "w": 16, "h": 32 },
 							"__smartColor": "#94D9B3",
 							"iid": "7322e810-7820-11ed-9353-435c4e48337e",
 							"width": 16,

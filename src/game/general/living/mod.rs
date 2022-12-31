@@ -4,8 +4,7 @@ use bevy::ecs::component::Component;
 use bevy::ecs::bundle::Bundle;
 use bevy_ecs_ldtk::prelude::*;
 use bevy::sprite::SpriteSheetBundle;
-use crate::game::general::MultipleSided;
-use crate::game::general::physics::SelfPhysicalBundle;
+use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysicalBundle};
 use crate::{Collider, Name};
 
 #[derive(Default, Component)]
@@ -20,6 +19,7 @@ pub struct PersonBundle {
     pub living: Living,
     pub name: Name,
     pub multiple_sided: MultipleSided,
+    pub multiple_movement_state: MultipleMovementState,
 
     #[from_entity_instance]
     pub collider: Collider,

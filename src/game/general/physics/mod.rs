@@ -1,12 +1,45 @@
 use bevy::math::{Vec2, Vec3};
 use bevy::ecs::component::Component;
-use bevy::prelude::{Mut, Query, Res, TextureAtlasSprite, Transform};
+use bevy::prelude::{Mut, Query, Res, ResMut, TextureAtlasSprite, Transform, Without};
 use bevy::ecs::bundle::Bundle;
-use bevy::time::Time;
+use bevy::time::{Time, Timer};
 use bevy_ecs_ldtk::{EntityInstance, LdtkEntity};
 use bevy_inspector_egui::Inspectable;
-use crate::default;
-use crate::game::general::MultipleSided;
+use crate::{default, GENERAL_BOTTOM, GENERAL_SIDE, GENERAL_TOP, MOB_BOTTOM_IDLE_END, MOB_BOTTOM_IDLE_START, MOB_BOTTOM_WALK_END, MOB_BOTTOM_WALK_START, MOB_SIDE_IDLE_END, MOB_SIDE_IDLE_START, MOB_SIDE_WALK_END, MOB_SIDE_WALK_START, MOB_TOP_IDLE_END, MOB_TOP_IDLE_START, MOB_TOP_WALK_END, MOB_TOP_WALK_START};
+
+#[derive(Inspectable, Debug)]
+enum Side { BOTTOM, LEFT, RIGHT, TOP }
+
+impl Default for Side {
+    fn default() -> Self {
+        Side::BOTTOM
+    }
+}
+
+#[derive(Inspectable, Debug)]
+enum MovementState { IDLE, WALK, DRAG }
+
+impl Default for MovementState {
+    fn default() -> Self {
+        MovementState::IDLE
+    }
+}
+
+#[derive(Default, Component, Inspectable)]
+pub struct MultipleSided {
+    side: Side
+}
+
+#[derive(Default, Component, Inspectable)]
+pub struct MultipleMovementState {
+    current_index: usize,
+    state: MovementState,
+    used_first: bool
+}
+
+pub struct MovementSpriteTimer {
+    pub timer: Timer
+}
 
 #[derive(Default, Component, Inspectable)]
 pub struct Physical {
@@ -81,45 +114,182 @@ pub struct SelfPhysicalBundle {
     pub self_physical: SelfPhysical,
 }
 
-pub fn update_sprites(mut transforms: Query<(&Physical, Option<&MultipleSided>, Option<&mut TextureAtlasSprite>, Option<&SelfPhysical>)>) {
-    for (physical, multiple_sided, atlas_sprite, self_physical) in transforms.iter_mut() {
-        if let Some(_) = multiple_sided {
-            if let Some(mut atlas_sprite) = atlas_sprite {
-                update_atlas_sprites(physical, self_physical, &mut atlas_sprite);
-            } else {
-                panic!("Multiple sided without atlas_sprite");
+pub fn update_movement_state_by_direction(mut entities: Query<(&mut MultipleMovementState, &Physical, Option<&SelfPhysical>)>) {
+    for (mut movement_state, physical, self_physical) in entities.iter_mut() {
+        let being_pushed = physical.direction.x != 0. || physical.direction.y != 0.;
+        if being_pushed {
+            movement_state.state = MovementState::DRAG;
+        } else {
+            movement_state.state = MovementState::IDLE;
+        }
+        if let Some(self_physical) = self_physical {
+            let moving = self_physical.direction.x != 0. || self_physical.direction.y != 0.;
+            if (physical.acceleration < self_physical.speed || !being_pushed) && moving {
+                movement_state.state = MovementState::WALK;
             }
         }
     }
 }
 
-fn update_atlas_sprites(physical: &Physical, self_physical: Option<&SelfPhysical>, atlas_sprite: &mut TextureAtlasSprite) {
-    let mut direction = physical.direction;
+pub fn update_sideds_by_direction(mut multiple_sideds: Query<(&Physical, &mut MultipleSided, Option<&SelfPhysical>)>) {
+    for (physical, mut multiple_sided, self_physical) in multiple_sideds.iter_mut() {
+        let mut direction = physical.direction;
 
-    if let Some(self_physical) = self_physical {
-        if physical.acceleration < self_physical.speed {
-            direction = self_physical.direction;
+        if let Some(self_physical) = self_physical {
+            if physical.acceleration < self_physical.speed {
+                direction = self_physical.direction;
+            }
+        }
+
+        direction.x =  f32::trunc(direction.x  * 100.0) / 100.0;
+        direction.y =  f32::trunc(direction.y  * 100.0) / 100.0;
+
+        if direction.x > 0. {
+            multiple_sided.side = Side::RIGHT;
+        }
+        else if direction.x < 0. {
+            multiple_sided.side = Side::LEFT;
+        }
+        else if direction.y < 0. {
+            multiple_sided.side = Side::BOTTOM;
+        }
+        else if direction.y > 0. {
+            multiple_sided.side = Side::TOP;
+        }
+    }
+}
+
+pub fn update_movement_sided_sprite(
+    time: Res<Time>, mut timer: ResMut<MovementSpriteTimer>,
+    mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite, &mut MultipleMovementState)>
+) {
+    let mut should_increase = false;
+    if timer.timer.tick(time.delta()).just_finished() {
+        should_increase = true;
+    }
+    for (multiple_sided, atlas_sprite, multiple_movement_state) in multiple_sideds.iter_mut() {
+        match multiple_movement_state.state {
+            MovementState::IDLE => {
+                match multiple_sided.side {
+                    Side::TOP =>
+                        update_idle_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_TOP_IDLE_START,
+                            MOB_TOP_IDLE_END, should_increase, false
+                        ),
+                    Side::BOTTOM =>
+                        update_idle_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_BOTTOM_IDLE_START,
+                            MOB_BOTTOM_IDLE_END, should_increase, false
+                        ),
+                    Side::LEFT =>
+                        update_idle_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_SIDE_IDLE_START,
+                            MOB_SIDE_IDLE_END, should_increase, false
+                        ),
+                    Side::RIGHT =>
+                        update_idle_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_SIDE_IDLE_START,
+                            MOB_SIDE_IDLE_END, should_increase, true
+                        )
+                }
+            }
+            MovementState::WALK => {
+                match multiple_sided.side {
+                    Side::TOP =>
+                        update_walk_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_TOP_WALK_START,
+                            MOB_TOP_WALK_END, MOB_TOP_IDLE_START, should_increase, true, false
+                        ),
+                    Side::BOTTOM =>
+                        update_walk_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_BOTTOM_WALK_START,
+                            MOB_BOTTOM_WALK_END, MOB_BOTTOM_IDLE_START, should_increase, true, false
+                        ),
+                    Side::LEFT =>
+                        update_walk_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_SIDE_WALK_START,
+                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase, false, false
+                        ),
+                    Side::RIGHT =>
+                        update_walk_sprite(
+                            multiple_movement_state, atlas_sprite, MOB_SIDE_WALK_START,
+                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase, false, true
+                        )
+                }
+            }
+            MovementState::DRAG => {} //TODO
         }
     }
 
-    direction.x =  f32::trunc(direction.x  * 100.0) / 100.0;
-    direction.y =  f32::trunc(direction.y  * 100.0) / 100.0;
+    fn update_walk_sprite(
+        mut multiple_movement_state: Mut<'_, MultipleMovementState>, mut atlas_sprite: Mut<'_, TextureAtlasSprite>,
+        start_index: usize, end_index: usize, idle_index: usize, should_increase: bool, auto_flip_x: bool, flip_x: bool
+    ) {
+        if (multiple_movement_state.current_index < start_index || multiple_movement_state.current_index > end_index) &&
+            multiple_movement_state.current_index != idle_index {
+            multiple_movement_state.current_index = start_index;
+            multiple_movement_state.used_first = true;
+            if auto_flip_x {
+                atlas_sprite.flip_x = !atlas_sprite.flip_x;
+            }
+        } else if should_increase {
+            if multiple_movement_state.current_index == idle_index {
+                if auto_flip_x {
+                    multiple_movement_state.current_index = start_index;
+                    atlas_sprite.flip_x = !atlas_sprite.flip_x;
+                } else {
+                    if multiple_movement_state.used_first {
+                        multiple_movement_state.current_index = end_index;
+                    } else {
+                        multiple_movement_state.current_index = start_index;
+                    }
+                    multiple_movement_state.used_first = !multiple_movement_state.used_first;
+                }
+            } else {
+                multiple_movement_state.current_index = idle_index;
+            }
+        }
+        if !auto_flip_x {
+            atlas_sprite.flip_x = flip_x;
+        }
+        atlas_sprite.index = multiple_movement_state.current_index;
+    }
 
-    if direction.x > 0. {
-        atlas_sprite.index = 0;
-        atlas_sprite.flip_x = false;
+    fn update_idle_sprite(
+        mut multiple_movement_state: Mut<'_, MultipleMovementState>, mut atlas_sprite: Mut<'_, TextureAtlasSprite>,
+        start_index: usize, end_index: usize, should_increase: bool, flip_x: bool
+    ) {
+        if multiple_movement_state.current_index >= end_index ||
+            multiple_movement_state.current_index < start_index {
+            multiple_movement_state.current_index = start_index;
+        } else if should_increase {
+            multiple_movement_state.current_index += 1;
+        }
+        atlas_sprite.index = multiple_movement_state.current_index;
+        atlas_sprite.flip_x = flip_x;
     }
-    else if direction.x < 0. {
-        atlas_sprite.index = 0;
-        atlas_sprite.flip_x = true;
-    }
-    else if direction.y < 0. {
-        atlas_sprite.index = 1;
-        atlas_sprite.flip_x = false;
-    }
-    else if direction.y > 0. {
-        atlas_sprite.index = 2;
-        atlas_sprite.flip_x = false;
+}
+
+pub fn update_sided_sprite(mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite), Without<MultipleMovementState>>) {
+    for (multiple_sided, mut atlas_sprite) in multiple_sideds.iter_mut() {
+        match multiple_sided.side {
+            Side::TOP => {
+                atlas_sprite.index = GENERAL_TOP;
+                atlas_sprite.flip_x = false;
+            }
+            Side::BOTTOM => {
+                atlas_sprite.index = GENERAL_BOTTOM;
+                atlas_sprite.flip_x = false;
+            }
+            Side::LEFT => {
+                atlas_sprite.index = GENERAL_SIDE;
+                atlas_sprite.flip_x = false;
+            }
+            Side::RIGHT => {
+                atlas_sprite.index = GENERAL_SIDE;
+                atlas_sprite.flip_x = true;
+            }
+        }
     }
 }
 

@@ -7,6 +7,3 @@ pub mod props;
 
 #[derive(Default, Component, Inspectable)]
 pub struct Name(pub String);
-
-#[derive(Default, Component)]
-pub struct MultipleSided;
