@@ -107,6 +107,7 @@ impl From<EntityInstance> for SpriteZone {
 pub struct SelfPhysical {
     pub direction: Vec3,
     pub speed: f32,
+    pub multiplier: f32,
 }
 
 impl From<EntityInstance> for SelfPhysical {
@@ -121,6 +122,7 @@ impl From<EntityInstance> for SelfPhysical {
 impl Default for SelfPhysical {
     fn default() -> Self {
         Self {
+            multiplier: 1.,
             direction: Vec3::ZERO,
             speed: 1.,
         }
@@ -324,7 +326,7 @@ pub fn direction_react(
     for (mut physical, self_physical, mut transform) in entities.iter_mut() {
         if let Some(self_physical) = self_physical {
             if self_physical.speed > physical.acceleration && self_physical.direction != Vec3::ZERO {
-                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
+                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed * self_physical.multiplier;
             }
         }
 
