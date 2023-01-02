@@ -1,6 +1,6 @@
 use bevy::math::{Vec2, Vec3};
 use bevy::ecs::component::Component;
-use bevy::prelude::{Mut, Query, Res, ResMut, TextureAtlasSprite, Transform, Without};
+use bevy::prelude::{Changed, Mut, Or, Query, Res, ResMut, TextureAtlasSprite, Transform, Without};
 use bevy::ecs::bundle::Bundle;
 use bevy::ecs::system::Resource;
 use bevy::time::{Time, Timer};
@@ -135,7 +135,9 @@ pub struct SelfPhysicalBundle {
     pub self_physical: SelfPhysical,
 }
 
-pub fn update_movement_state_by_direction(mut entities: Query<(&mut MultipleMovementState, &Physical, Option<&SelfPhysical>)>) {
+pub fn update_movement_state_by_direction(
+    mut entities: Query<(&mut MultipleMovementState, &Physical, Option<&SelfPhysical>), Or<(Changed<Physical>, Changed<SelfPhysical>)>>
+) {
     for (mut movement_state, physical, self_physical) in entities.iter_mut() {
         let being_pushed = physical.direction.x != 0. || physical.direction.y != 0.;
         if being_pushed {
@@ -152,7 +154,9 @@ pub fn update_movement_state_by_direction(mut entities: Query<(&mut MultipleMove
     }
 }
 
-pub fn update_sideds_by_direction(mut multiple_sideds: Query<(&Physical, &mut MultipleSided, Option<&SelfPhysical>)>) {
+pub fn update_sideds_by_direction(
+    mut multiple_sideds: Query<(&Physical, &mut MultipleSided, Option<&SelfPhysical>), Or<(Changed<Physical>, Changed<SelfPhysical>)>>
+) {
     for (physical, mut multiple_sided, self_physical) in multiple_sideds.iter_mut() {
         let mut direction = physical.direction;
 
@@ -319,14 +323,16 @@ pub fn direction_react(
 ) {
     for (mut physical, self_physical, mut transform) in entities.iter_mut() {
         if let Some(self_physical) = self_physical {
-            if self_physical.speed > physical.acceleration {
+            if self_physical.speed > physical.acceleration && self_physical.direction != Vec3::ZERO {
                 transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
             }
         }
 
-        physical.direction = physical.direction.normalize_or_zero();
-        transform.translation += physical.direction * time.delta_seconds() * physical.acceleration;
-        physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
+        if physical.direction != Vec3::ZERO {
+            physical.direction = physical.direction.normalize_or_zero();
+            transform.translation += physical.direction * time.delta_seconds() * physical.acceleration;
+            physical.acceleration = (physical.acceleration - physical.weight).clamp(0., f32::MAX);
+        }
     }
 }
 

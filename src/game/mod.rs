@@ -2,10 +2,10 @@ use bevy::app::Plugin;
 use bevy::asset::AssetServer;
 use bevy::input::Input;
 use bevy::math::Vec3;
-use bevy::prelude::{Camera, KeyCode, Query, Res, Transform, With, Without};
+use bevy::prelude::{Camera, Changed, KeyCode, Query, Res, Transform, With, Without};
 use bevy::ecs::component::Component;
 use bevy_ecs_ldtk::LdtkWorldBundle;
-use crate::{App, Camera2dBundle, Collider, Commands, default, Name, OrthographicProjection, Physical, ScalingMode};
+use crate::{App, Collider, Commands, default, Name, Physical};
 use crate::game::general::living::player::Player;
 use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysical, SpriteZone};
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
@@ -53,11 +53,16 @@ pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_physics: Query
     }
 
     for mut physics in player_physics.iter_mut() {
-       physics.direction = directions;
+        if physics.direction != directions {
+            physics.direction = directions;
+        }
     }
 }
 
-pub fn camera_follow(camera_targets: Query<&mut Transform, With<CameraTarget>>, mut cameras: Query<&mut Transform, (With<Camera>, Without<CameraTarget>)>) {
+pub fn camera_follow(
+    camera_targets: Query<&mut Transform, (With<CameraTarget>, Changed<Transform>)>,
+    mut cameras: Query<&mut Transform, (With<Camera>, Without<CameraTarget>)>
+) {
     match camera_targets.get_single() {
         Ok(target) => {
             let mut camera = cameras.get_single_mut().unwrap();
