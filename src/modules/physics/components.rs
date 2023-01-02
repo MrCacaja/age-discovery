@@ -50,6 +50,7 @@ impl From<EntityInstance> for Collider {
 pub struct SelfPhysical {
     pub direction: Vec3,
     pub speed: f32,
+    pub multiplier: f32,
 }
 
 impl From<EntityInstance> for SelfPhysical {
@@ -66,6 +67,7 @@ impl Default for SelfPhysical {
         Self {
             direction: Vec3::ZERO,
             speed: 1.,
+            multiplier: 1.,
         }
     }
 }
