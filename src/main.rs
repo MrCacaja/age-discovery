@@ -1,4 +1,4 @@
-mod game;
+mod modules;
 
 use bevy::app::{App, PluginGroup};
 use bevy::DefaultPlugins;
@@ -9,11 +9,13 @@ use bevy::utils::default;
 use bevy_ecs_ldtk::{LdtkPlugin, LevelSelection};
 use bevy_ecs_ldtk::app::RegisterLdtkObjects;
 use bevy_pixel_camera::PixelCameraPlugin;
-use crate::game::general::Name;
-use crate::game::{camera_follow, DebugPlugin, read_input, setup_game};
-use crate::game::general::living::player::PlayerBundle;
-use crate::game::general::physics::{Collider, collider_direction_react, direction_react, MovementSpriteTimer, overlap_sprite_zones, Physical, update_movement_sided_sprite, update_movement_state_by_direction, update_sided_sprite, update_sideds_by_direction};
-use crate::game::general::props::{RockBundle, TreeStumpBundle};
+use crate::modules::camera::systems::camera_follow;
+use crate::modules::init::systems::{DebugPlugin, setup_game};
+use crate::modules::input::systems::read_input;
+use crate::modules::living::components::PlayerBundle;
+use crate::modules::physics::components::MovementSpriteTimer;
+use crate::modules::physics::systems::{collider_direction_react, direction_react, overlap_sprite_zones, update_movement_sided_sprite, update_movement_state_by_direction, update_sided_sprite, update_sideds_by_direction};
+use crate::modules::prop::components::{RockBundle, TreeStumpBundle};
 
 // const GENERAL_SPRITE_SHEET_COLS: usize = 3;
 // const GENERAL_SPRITE_SHEET_ROWS: usize = 1;

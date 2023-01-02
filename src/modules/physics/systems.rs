@@ -1,139 +1,12 @@
-use bevy::math::{Vec2, Vec3};
 use bevy::ecs::component::Component;
-use bevy::prelude::{Changed, Mut, Or, Query, Res, ResMut, TextureAtlasSprite, Transform, Without};
 use bevy::ecs::bundle::Bundle;
-use bevy::ecs::system::Resource;
-use bevy::time::{Time, Timer};
-use bevy_ecs_ldtk::{EntityInstance, LdtkEntity};
+use bevy::math::{Vec2, Vec3};
+use bevy::prelude::{Changed, Mut, Or, Query, Res, ResMut, TextureAtlasSprite, Time, Transform, Without};
 use bevy_inspector_egui::Inspectable;
-use crate::{default, GENERAL_BOTTOM, GENERAL_SIDE, GENERAL_TOP, MOB_BOTTOM_IDLE_END, MOB_BOTTOM_IDLE_START, MOB_BOTTOM_WALK_END, MOB_BOTTOM_WALK_START, MOB_SIDE_IDLE_END, MOB_SIDE_IDLE_START, MOB_SIDE_WALK_END, MOB_SIDE_WALK_START, MOB_TOP_IDLE_END, MOB_TOP_IDLE_START, MOB_TOP_WALK_END, MOB_TOP_WALK_START};
+use bevy_ecs_ldtk::LdtkEntity;
+use crate::{GENERAL_BOTTOM, GENERAL_SIDE, GENERAL_TOP, MOB_BOTTOM_IDLE_END, MOB_BOTTOM_IDLE_START, MOB_BOTTOM_WALK_END, MOB_BOTTOM_WALK_START, MOB_SIDE_IDLE_END, MOB_SIDE_IDLE_START, MOB_SIDE_WALK_END, MOB_SIDE_WALK_START, MOB_TOP_IDLE_END, MOB_TOP_IDLE_START, MOB_TOP_WALK_END, MOB_TOP_WALK_START};
+use crate::modules::physics::components::{Collider, MovementSpriteTimer, MovementState, MultipleMovementState, MultipleSided, Physical, SelfPhysical, SpriteZone, Side};
 
-#[derive(Inspectable, Debug)]
-enum Side { BOTTOM, LEFT, RIGHT, TOP }
-
-impl Default for Side {
-    fn default() -> Self {
-        Side::BOTTOM
-    }
-}
-
-#[derive(Inspectable, Debug)]
-enum MovementState { IDLE, WALK, DRAG }
-
-impl Default for MovementState {
-    fn default() -> Self {
-        MovementState::IDLE
-    }
-}
-
-#[derive(Default, Component, Inspectable)]
-pub struct MultipleSided {
-    side: Side
-}
-
-#[derive(Default, Component, Inspectable)]
-pub struct MultipleMovementState {
-    current_index: usize,
-    state: MovementState,
-    used_first: bool
-}
-
-#[derive(Default, Resource)]
-pub struct MovementSpriteTimer {
-    pub timer: Timer
-}
-
-#[derive(Default, Component, Inspectable)]
-pub struct Physical {
-    pub direction: Vec3,
-    pub weight: f32,
-    pub acceleration: f32,
-}
-
-impl From<EntityInstance> for Physical {
-    fn from(entity_instance: EntityInstance) -> Physical {
-        match entity_instance.identifier.as_str() {
-            "Player" => Physical { weight: 2.5, ..default() },
-            _ => Physical {..default()}
-        }
-    }
-}
-
-#[derive(Inspectable)]
-pub struct TransformZone {
-    pub size: Vec2,
-    pub offset: Vec2
-}
-
-#[derive(Component, Inspectable)]
-pub struct Collider(TransformZone);
-
-impl Default for Collider {
-    fn default() -> Self {
-        Self(TransformZone {size: Vec2::new(16., 10.), offset: Vec2::ZERO})
-    }
-}
-
-impl From<EntityInstance> for Collider {
-    fn from(entity_instance: EntityInstance) -> Collider {
-        match entity_instance.identifier.as_str() {
-            "Player" => Collider(TransformZone {size: Vec2::new(16., 4.5), offset: Vec2::new(0., -8.)}),
-            "Rock" => Collider(TransformZone {size: Vec2::new(28., 20.), offset: Vec2::new(-6., -8.)}),
-            _ => Collider {..default()}
-        }
-    }
-}
-
-#[derive(Component, Inspectable)]
-pub struct SpriteZone(TransformZone);
-
-impl Default for SpriteZone {
-    fn default() -> Self {
-        Self(TransformZone {size: Vec2::new(16., 16.), offset: Vec2::ZERO})
-    }
-}
-
-impl From<EntityInstance> for SpriteZone {
-    fn from(entity_instance: EntityInstance) -> SpriteZone {
-        match entity_instance.identifier.as_str() {
-            "Player" => SpriteZone(TransformZone {size: Vec2::new(16., 32.), offset: Vec2::new(0., -8.)}),
-            "Rock" => SpriteZone(TransformZone {size: Vec2::new(32., 32.), offset: Vec2::new(-6., -8.)}),
-            _ => SpriteZone {..default()}
-        }
-    }
-}
-
-#[derive(Component, Inspectable)]
-pub struct SelfPhysical {
-    pub direction: Vec3,
-    pub speed: f32,
-}
-
-impl From<EntityInstance> for SelfPhysical {
-    fn from(entity_instance: EntityInstance) -> SelfPhysical {
-        match entity_instance.identifier.as_str() {
-            "Player" => SelfPhysical { speed: 50., ..default() },
-            _ => SelfPhysical {..default()}
-        }
-    }
-}
-
-impl Default for SelfPhysical {
-    fn default() -> Self {
-        Self {
-            direction: Vec3::ZERO,
-            speed: 1.,
-        }
-    }
-}
-
-#[derive(Bundle, Default, LdtkEntity)]
-pub struct SelfPhysicalBundle {
-    #[from_entity_instance]
-    pub physical: Physical,
-    #[from_entity_instance]
-    pub self_physical: SelfPhysical,
-}
 
 pub fn update_movement_state_by_direction(
     mut entities: Query<(&mut MultipleMovementState, &Physical, Option<&SelfPhysical>), Or<(Changed<Physical>, Changed<SelfPhysical>)>>
@@ -355,8 +228,8 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
     }
 
     fn collide_self(mut physical: Mut<'_, Physical, >, mut self_physical: Mut<'_, SelfPhysical, >,
-               collider: &Collider, transform: Mut<'_, Transform, >,
-               target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
+                    collider: &Collider, transform: Mut<'_, Transform, >,
+                    target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
         let mut direction = physical.direction;
         direction += self_physical.direction;
         let collider_pos = Vec2 {x: transform.translation.x + collider.0.offset.x, y: transform.translation.y + collider.0.offset.y};
@@ -398,9 +271,9 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
             let collider_len = future_collider_pos + collider.0.size;
             return !(
                 collider_len.y          <   target_collider_pos.y   ||
-                future_collider_pos.y   >   target_collider_len.y   ||
-                collider_len.x          <   target_collider_pos.x   ||
-                future_collider_pos.x   >   target_collider_len.x
+                    future_collider_pos.y   >   target_collider_len.y   ||
+                    collider_len.x          <   target_collider_pos.x   ||
+                    future_collider_pos.x   >   target_collider_len.x
             );
         }
         return false;
@@ -425,7 +298,7 @@ pub fn overlap_sprite_zones(mut sprite_zones: Query<(&SpriteZone, &mut Transform
             b_sprite_zone_pos.x + b_sprite_zone.0.size.x, b_sprite_zone_pos.y + b_sprite_zone.0.size.y
         );
         let collided = !(
-                a_sprite_zone_len.y   <   b_sprite_zone_pos.y   ||
+            a_sprite_zone_len.y   <   b_sprite_zone_pos.y   ||
                 a_sprite_zone_pos.y   >   b_sprite_zone_len.y   ||
                 a_sprite_zone_len.x   <   b_sprite_zone_pos.x   ||
                 a_sprite_zone_pos.x   >   b_sprite_zone_len.x
