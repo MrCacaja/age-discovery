@@ -59,7 +59,7 @@ pub fn direction_react(
     for (mut physical, self_physical, mut transform) in entities.iter_mut() {
         if let Some(self_physical) = self_physical {
             if self_physical.speed > physical.acceleration && self_physical.direction != Vec3::ZERO {
-                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed;
+                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed * self_physical.multiplier;
             }
         }
 
@@ -92,8 +92,7 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
     fn collide_self(mut physical: Mut<'_, Physical, >, mut self_physical: Mut<'_, SelfPhysical, >,
                     collider: &Collider, transform: Mut<'_, Transform, >,
                     target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
-        let mut direction = physical.direction;
-        direction += self_physical.direction;
+        let direction = physical.direction + self_physical.direction * self_physical.multiplier;
         let collider_pos = Vec2 {x: transform.translation.x + collider.0.offset.x, y: transform.translation.y + collider.0.offset.y};
         let future_collider_pos_x = Vec2::new(direction.x + collider_pos.x, collider_pos.y);
         if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
