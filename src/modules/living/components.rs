@@ -1,10 +1,10 @@
 use bevy::ecs::component::Component;
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::SpriteSheetBundle;
-use bevy_inspector_egui::Inspectable;
 use bevy_ecs_ldtk::LdtkEntity;
 use crate::modules::camera::components::CameraTarget;
-use crate::modules::physics::components::{Collider, MultipleMovementState, MultipleSided, SelfPhysicalBundle, SpriteZone};
+use crate::modules::physics::components::{Collider, SelfPhysicalBundle};
+use crate::modules::physics::sprite_change::components::{MultipleMovementState, MultipleSided, SpriteZone};
 use crate::modules::simple::components::Name;
 
 #[derive(Default, Component)]

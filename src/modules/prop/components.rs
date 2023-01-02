@@ -3,7 +3,8 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::SpriteSheetBundle;
 use bevy_inspector_egui::Inspectable;
 use bevy_ecs_ldtk::LdtkEntity;
-use crate::modules::physics::components::{Collider, SpriteZone};
+use crate::modules::physics::components::{Collider};
+use crate::modules::physics::sprite_change::components::SpriteZone;
 
 
 #[derive(Default, Component, Inspectable)]

@@ -1,14 +1,12 @@
 use bevy::app::Plugin;
 use bevy::asset::AssetServer;
-use bevy::input::Input;
-use bevy::math::Vec3;
-use bevy::prelude::{Camera, Changed, KeyCode, Query, Res, Transform, With, Without};
-use bevy::ecs::component::Component;
+use bevy::prelude::Res;
 use bevy_ecs_ldtk::LdtkWorldBundle;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
 use bevy_pixel_camera::PixelCameraBundle;
 use crate::{App, Commands, default};
-use crate::modules::physics::components::{Collider, MultipleMovementState, MultipleSided, Physical, SelfPhysical, SpriteZone};
+use crate::modules::physics::components::{Collider, Physical, SelfPhysical};
+use crate::modules::physics::sprite_change::components::{MultipleMovementState, MultipleSided, SpriteZone};
 use crate::modules::simple::components::Name;
 
 pub struct DebugPlugin;
