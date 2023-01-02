@@ -1,11 +1,11 @@
-pub mod player;
-
 use bevy::ecs::component::Component;
 use bevy::ecs::bundle::Bundle;
-use bevy_ecs_ldtk::prelude::*;
-use bevy::sprite::SpriteSheetBundle;
-use crate::game::general::physics::{MultipleMovementState, MultipleSided, SelfPhysicalBundle, SpriteZone};
-use crate::{Collider, Name};
+use bevy::prelude::SpriteSheetBundle;
+use bevy_ecs_ldtk::LdtkEntity;
+use crate::modules::camera::components::CameraTarget;
+use crate::modules::physics::components::{Collider, SelfPhysicalBundle};
+use crate::modules::physics::sprite_change::components::{MultipleMovementState, MultipleSided, SpriteZone};
+use crate::modules::simple::components::Name;
 
 #[derive(Default, Component)]
 pub struct Living;
@@ -34,4 +34,17 @@ pub struct PersonBundle {
     #[ldtk_entity]
     #[bundle]
     pub self_physical: SelfPhysicalBundle
+}
+
+#[derive(Default, Component)]
+pub struct Player;
+
+#[derive(Bundle, Default, LdtkEntity)]
+pub struct PlayerBundle {
+    pub player: Player,
+    pub camera_target: CameraTarget,
+
+    #[ldtk_entity]
+    #[bundle]
+    pub person: PersonBundle,
 }
