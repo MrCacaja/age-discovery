@@ -38,24 +38,18 @@ pub fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn read_input(keyboard_input: Res<Input<KeyCode>>, mut player_physics: Query<&mut SelfPhysical, With<Player>>) {
     let mut directions = Vec3::ZERO;
-    let mut _sprintspeed = 0.;
-    if keyboard_input.pressed(KeyCode::LShift) {
-        _sprintspeed = 0.8;
-    }
-    if keyboard_input.just_released(KeyCode::LShift) {
-        _sprintspeed = 0.;
-    }
+
     if keyboard_input.pressed(KeyCode::W) {
-        directions.y += _sprintspeed + 1.;
+        directions.y += 1.;
     }
     if keyboard_input.pressed(KeyCode::S) {
-        directions.y -= _sprintspeed + 1.;
+        directions.y -= 1.;
     }
     if keyboard_input.pressed(KeyCode::D) {
-        directions.x += _sprintspeed + 1.;
+        directions.x += 1.;
     }
     if keyboard_input.pressed(KeyCode::A) {
-        directions.x -= _sprintspeed + 1.;
+        directions.x -= 1.;
     }
 
     for mut physics in player_physics.iter_mut() {
