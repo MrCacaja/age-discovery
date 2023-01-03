@@ -1,7 +1,8 @@
 use bevy::math::{Vec2, Vec3};
-use bevy::prelude::{Changed, Mut, Or, Query, Res, Time, Transform};
+use bevy::prelude::{Changed, EventWriter, Mut, Or, Query, Res, Time, Transform};
 use crate::modules::physics::components::{Collider, Physical, SelfPhysical};
 use crate::modules::physics::sprite_change::components::{MovementState, MultipleMovementState, MultipleSided, Side};
+use crate::modules::sound::components::{SoundEvent, SoundType};
 
 
 pub fn update_movement_state_by_direction(
@@ -53,13 +54,11 @@ pub fn update_sideds_by_direction(
     }
 }
 
-pub fn direction_react(
-    time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>, &mut Transform)>,
-) {
+pub fn direction_react(time: Res<Time>, mut entities: Query<(&mut Physical, Option<&SelfPhysical>, &mut Transform)>) {
     for (mut physical, self_physical, mut transform) in entities.iter_mut() {
         if let Some(self_physical) = self_physical {
             if self_physical.speed > physical.acceleration && self_physical.direction != Vec3::ZERO {
-                transform.translation += self_physical.direction * time.delta_seconds() * self_physical.speed * self_physical.multiplier;
+                transform.translation += self_physical.direction.normalize_or_zero() * time.delta_seconds() * self_physical.speed * self_physical.multiplier;
             }
         }
 
@@ -92,7 +91,7 @@ pub fn collider_direction_react(mut colliders: Query<(Option<&mut Physical>, Opt
     fn collide_self(mut physical: Mut<'_, Physical, >, mut self_physical: Mut<'_, SelfPhysical, >,
                     collider: &Collider, transform: Mut<'_, Transform, >,
                     target_transform: Mut<'_, Transform, >, target_collider: &Collider) {
-        let direction = physical.direction + self_physical.direction * self_physical.multiplier;
+        let direction = physical.direction.normalize_or_zero() + self_physical.direction.normalize_or_zero() * self_physical.multiplier;
         let collider_pos = Vec2 {x: transform.translation.x + collider.0.offset.x, y: transform.translation.y + collider.0.offset.y};
         let future_collider_pos_x = Vec2::new(direction.x + collider_pos.x, collider_pos.y);
         if check_future(future_collider_pos_x, collider, &target_transform, target_collider) {
