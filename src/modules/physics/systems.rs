@@ -1,8 +1,7 @@
 use bevy::math::{Vec2, Vec3};
-use bevy::prelude::{Changed, EventWriter, Mut, Or, Query, Res, Time, Transform};
+use bevy::prelude::{Changed, Mut, Or, Query, Res, Time, Transform};
 use crate::modules::physics::components::{Collider, Physical, SelfPhysical};
 use crate::modules::physics::sprite_change::components::{MovementState, MultipleMovementState, MultipleSided, Side};
-use crate::modules::sound::components::{SoundEvent, SoundType};
 
 
 pub fn update_movement_state_by_direction(

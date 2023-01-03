@@ -5,3 +5,5 @@ pub mod simple;
 pub mod prop;
 pub mod physics;
 pub mod living;
+pub mod sound;
+pub mod rng;

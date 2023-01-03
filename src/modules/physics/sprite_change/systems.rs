@@ -1,11 +1,13 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Mut, Query, Res, ResMut, TextureAtlasSprite, Time, Transform, Without};
+use bevy::prelude::{EventWriter, Mut, Query, Res, ResMut, TextureAtlasSprite, Time, Transform, Without};
 use crate::modules::physics::sprite_change::consts::{GENERAL_BOTTOM, GENERAL_SIDE, GENERAL_TOP, MOB_BOTTOM_IDLE_END, MOB_BOTTOM_IDLE_START, MOB_BOTTOM_WALK_END, MOB_BOTTOM_WALK_START, MOB_SIDE_IDLE_END, MOB_SIDE_IDLE_START, MOB_SIDE_WALK_END, MOB_SIDE_WALK_START, MOB_TOP_IDLE_END, MOB_TOP_IDLE_START, MOB_TOP_WALK_END, MOB_TOP_WALK_START};
 use crate::modules::physics::sprite_change::components::{MovementSpriteTimer, MovementState, MultipleMovementState, MultipleSided, Side, SpriteZone};
+use crate::modules::sound::components::{SoundEvent, SoundType};
 
 pub fn update_movement_sided_sprite(
     time: Res<Time>, mut timer: ResMut<MovementSpriteTimer>,
-    mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite, &mut MultipleMovementState)>
+    mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite, &mut MultipleMovementState)>,
+    mut sound_event: EventWriter<SoundEvent>
 ) {
     let mut should_increase = false;
     if timer.timer.tick(time.delta()).just_finished() {
@@ -42,22 +44,26 @@ pub fn update_movement_sided_sprite(
                     Side::TOP =>
                         update_walk_sprite(
                             multiple_movement_state, atlas_sprite, MOB_TOP_WALK_START,
-                            MOB_TOP_WALK_END, MOB_TOP_IDLE_START, should_increase, true, false
+                            MOB_TOP_WALK_END, MOB_TOP_IDLE_START, should_increase,
+                            true, false, &mut sound_event
                         ),
                     Side::BOTTOM =>
                         update_walk_sprite(
                             multiple_movement_state, atlas_sprite, MOB_BOTTOM_WALK_START,
-                            MOB_BOTTOM_WALK_END, MOB_BOTTOM_IDLE_START, should_increase, true, false
+                            MOB_BOTTOM_WALK_END, MOB_BOTTOM_IDLE_START, should_increase,
+                            true, false, &mut sound_event
                         ),
                     Side::LEFT =>
                         update_walk_sprite(
                             multiple_movement_state, atlas_sprite, MOB_SIDE_WALK_START,
-                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase, false, false
+                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase,
+                            false, false, &mut sound_event
                         ),
                     Side::RIGHT =>
                         update_walk_sprite(
                             multiple_movement_state, atlas_sprite, MOB_SIDE_WALK_START,
-                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase, false, true
+                            MOB_SIDE_WALK_END, MOB_SIDE_IDLE_START, should_increase,
+                            false, true, &mut sound_event
                         )
                 }
             }
@@ -67,7 +73,8 @@ pub fn update_movement_sided_sprite(
 
     fn update_walk_sprite(
         mut multiple_movement_state: Mut<'_, MultipleMovementState>, mut atlas_sprite: Mut<'_, TextureAtlasSprite>,
-        start_index: usize, end_index: usize, idle_index: usize, should_increase: bool, auto_flip_x: bool, flip_x: bool
+        start_index: usize, end_index: usize, idle_index: usize, should_increase: bool, auto_flip_x: bool, flip_x: bool,
+        sound_event: &mut EventWriter<SoundEvent>
     ) {
         if (multiple_movement_state.current_index < start_index || multiple_movement_state.current_index > end_index) &&
             multiple_movement_state.current_index != idle_index {
@@ -75,12 +82,15 @@ pub fn update_movement_sided_sprite(
             multiple_movement_state.used_first = true;
             if auto_flip_x {
                 atlas_sprite.flip_x = !atlas_sprite.flip_x;
+                sound_event.send(SoundEvent { path: "step/grass".to_string(), sound_type: SoundType::RANDOM, file: "4".to_string() });
             }
         } else if should_increase {
             if multiple_movement_state.current_index == idle_index {
                 if auto_flip_x {
                     multiple_movement_state.current_index = start_index;
                     atlas_sprite.flip_x = !atlas_sprite.flip_x;
+                    sound_event.send(SoundEvent { path: "step/grass".to_string(), sound_type: SoundType::RANDOM, file: "4".to_string() });
+
                 } else {
                     if multiple_movement_state.used_first {
                         multiple_movement_state.current_index = end_index;
@@ -88,6 +98,7 @@ pub fn update_movement_sided_sprite(
                         multiple_movement_state.current_index = start_index;
                     }
                     multiple_movement_state.used_first = !multiple_movement_state.used_first;
+                    sound_event.send(SoundEvent { path: "step/grass".to_string(), sound_type: SoundType::RANDOM, file: "4".to_string() });
                 }
             } else {
                 multiple_movement_state.current_index = idle_index;
