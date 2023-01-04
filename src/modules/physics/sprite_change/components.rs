@@ -1,10 +1,12 @@
 use bevy::ecs::component::Component;
 use bevy::ecs::prelude::Resource;
 use bevy::math::Vec2;
-use bevy_inspector_egui::Inspectable;
+use bevy::prelude::{Reflect, ReflectComponent, TimerMode};
 use bevy_ecs_ldtk::EntityInstance;
 use crate::{default, Timer};
 use crate::modules::physics::components::TransformZone;
+use crate::modules::physics::sprite_change::consts::MOB_BOTTOM_IDLE_START;
+use bevy_inspector_egui::Inspectable;
 
 #[derive(Inspectable, Debug)]
 pub enum Side { BOTTOM, LEFT, RIGHT, TOP }
@@ -15,7 +17,7 @@ impl Default for Side {
     }
 }
 
-#[derive(Inspectable, Debug)]
+#[derive(Inspectable, Debug, Reflect)]
 pub enum MovementState { IDLE, WALK, DRAG }
 
 impl Default for MovementState {
@@ -26,14 +28,26 @@ impl Default for MovementState {
 
 #[derive(Default, Component, Inspectable)]
 pub struct MultipleSided {
-    pub side: Side
+    pub side: Side,
 }
 
-#[derive(Default, Component, Inspectable)]
+#[derive(Component, Reflect)]
+#[reflect(Component)]
 pub struct MultipleMovementState {
     pub current_index: usize,
     pub state: MovementState,
-    pub used_first: bool
+    pub used_first: bool,
+    pub default_duration: f32,
+    pub timer: Timer
+}
+
+impl Default for MultipleMovementState {
+    fn default() -> Self {
+        MultipleMovementState {
+            timer: Timer::from_seconds(0.2, TimerMode::Repeating), default_duration: 0.2,
+            used_first: false, state: MovementState::IDLE, current_index: MOB_BOTTOM_IDLE_START
+        }
+    }
 }
 
 #[derive(Default, Resource)]

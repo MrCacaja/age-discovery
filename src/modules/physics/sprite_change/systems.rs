@@ -1,19 +1,28 @@
+use std::time::Duration;
 use bevy::math::Vec2;
-use bevy::prelude::{EventWriter, Mut, Query, Res, ResMut, TextureAtlasSprite, Time, Transform, Without};
+use bevy::prelude::{Changed, EventWriter, Mut, Query, Res, TextureAtlasSprite, Time, Transform, Without};
+use crate::modules::physics::components::SelfPhysical;
 use crate::modules::physics::sprite_change::consts::{GENERAL_BOTTOM, GENERAL_SIDE, GENERAL_TOP, MOB_BOTTOM_IDLE_END, MOB_BOTTOM_IDLE_START, MOB_BOTTOM_WALK_END, MOB_BOTTOM_WALK_START, MOB_SIDE_IDLE_END, MOB_SIDE_IDLE_START, MOB_SIDE_WALK_END, MOB_SIDE_WALK_START, MOB_TOP_IDLE_END, MOB_TOP_IDLE_START, MOB_TOP_WALK_END, MOB_TOP_WALK_START};
-use crate::modules::physics::sprite_change::components::{MovementSpriteTimer, MovementState, MultipleMovementState, MultipleSided, Side, SpriteZone};
+use crate::modules::physics::sprite_change::components::{MovementState, MultipleMovementState, MultipleSided, Side, SpriteZone};
 use crate::modules::sound::components::{SoundEvent, SoundType};
 
-pub fn update_movement_sided_sprite(
-    time: Res<Time>, mut timer: ResMut<MovementSpriteTimer>,
-    mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite, &mut MultipleMovementState)>,
-    mut sound_event: EventWriter<SoundEvent>
+pub fn sync_self_physical_multiple_movement(
+    mut entities: Query<(&mut MultipleMovementState, &SelfPhysical), Changed<SelfPhysical>>
 ) {
-    let mut should_increase = false;
-    if timer.timer.tick(time.delta()).just_finished() {
-        should_increase = true;
+    for (mut multiple_movement_state, self_physical) in entities.iter_mut() {
+        let duration_value = multiple_movement_state.default_duration / self_physical.multiplier;
+        if multiple_movement_state.timer.duration().as_secs_f32() != duration_value {
+            multiple_movement_state.timer.set_duration(Duration::from_secs_f32(duration_value));
+        }
     }
-    for (multiple_sided, atlas_sprite, multiple_movement_state) in multiple_sideds.iter_mut() {
+}
+
+pub fn update_movement_sided_sprite(
+    mut multiple_sideds: Query<(&MultipleSided, &mut TextureAtlasSprite, &mut MultipleMovementState)>,
+    mut sound_event: EventWriter<SoundEvent>, time: Res<Time>
+) {
+    for (multiple_sided, atlas_sprite, mut multiple_movement_state) in multiple_sideds.iter_mut() {
+        let should_increase = multiple_movement_state.timer.tick(time.delta()).just_finished();
         match multiple_movement_state.state {
             MovementState::IDLE => {
                 match multiple_sided.side {

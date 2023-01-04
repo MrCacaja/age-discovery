@@ -19,8 +19,8 @@ impl Plugin for DebugPlugin {
             .register_inspectable::<SelfPhysical>()
             .register_inspectable::<Collider>()
             .register_inspectable::<SpriteZone>()
-            .register_inspectable::<MultipleMovementState>()
-            .register_inspectable::<MultipleSided>();
+            .register_inspectable::<MultipleSided>()
+            .register_type::<MultipleMovementState>();
     }
 }
 
