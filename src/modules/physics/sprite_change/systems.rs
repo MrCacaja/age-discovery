@@ -11,7 +11,9 @@ pub fn sync_self_physical_multiple_movement(
 ) {
     for (mut multiple_movement_state, self_physical) in entities.iter_mut() {
         let duration_value = multiple_movement_state.default_duration / self_physical.multiplier;
-        if multiple_movement_state.timer.duration().as_secs_f32() != duration_value {
+        let moving = self_physical.direction.x != 0. || self_physical.direction.y != 0.;
+        let timer_is_equal = multiple_movement_state.timer.duration().as_secs_f32();
+        if timer_is_equal != duration_value && moving {
             multiple_movement_state.timer.set_duration(Duration::from_secs_f32(duration_value));
         }
     }
