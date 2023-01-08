@@ -67,7 +67,7 @@ impl Default for SpriteZone {
 impl From<EntityInstance> for SpriteZone {
     fn from(entity_instance: EntityInstance) -> SpriteZone {
         match entity_instance.identifier.as_str() {
-            "Player" => SpriteZone(TransformZone {size: Vec2::new(16., 32.), offset: Vec2::new(0., -8.)}),
+            "Player" | "Elf" => SpriteZone(TransformZone {size: Vec2::new(16., 32.), offset: Vec2::new(0., -8.)}),
             "Rock" => SpriteZone(TransformZone {size: Vec2::new(32., 32.), offset: Vec2::new(-6., -8.)}),
             _ => SpriteZone {..default()}
         }

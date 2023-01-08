@@ -15,7 +15,7 @@ pub struct Physical {
 impl From<EntityInstance> for Physical {
     fn from(entity_instance: EntityInstance) -> Physical {
         match entity_instance.identifier.as_str() {
-            "Player" => Physical { weight: 2.5, ..default() },
+            "Player" | "Elf" => Physical { weight: 2.5, ..default() },
             _ => Physical {..default()}
         }
     }
@@ -39,7 +39,7 @@ impl Default for Collider {
 impl From<EntityInstance> for Collider {
     fn from(entity_instance: EntityInstance) -> Collider {
         match entity_instance.identifier.as_str() {
-            "Player" => Collider(TransformZone {size: Vec2::new(16., 4.5), offset: Vec2::new(0., -8.)}),
+            "Player" | "Elf" => Collider(TransformZone {size: Vec2::new(16., 4.5), offset: Vec2::new(0., -8.)}),
             "Rock" => Collider(TransformZone {size: Vec2::new(28., 20.), offset: Vec2::new(-6., -8.)}),
             _ => Collider {..default()}
         }
@@ -56,7 +56,7 @@ pub struct SelfPhysical {
 impl From<EntityInstance> for SelfPhysical {
     fn from(entity_instance: EntityInstance) -> SelfPhysical {
         match entity_instance.identifier.as_str() {
-            "Player" => SelfPhysical { speed: 50., ..default() },
+            "Player" | "Elf" => SelfPhysical { speed: 50., ..default() },
             _ => SelfPhysical {..default()}
         }
     }

@@ -5,6 +5,7 @@ use bevy_ecs_ldtk::LdtkWorldBundle;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
 use bevy_pixel_camera::PixelCameraBundle;
 use crate::{App, Commands, default};
+use crate::modules::living::components::{Desire, Relationships};
 use crate::modules::physics::components::{Collider, Physical, SelfPhysical};
 use crate::modules::physics::sprite_change::components::{MultipleMovementState, MultipleSided, SpriteZone};
 use crate::modules::simple::components::Name;
@@ -20,6 +21,8 @@ impl Plugin for DebugPlugin {
             .register_inspectable::<Collider>()
             .register_inspectable::<SpriteZone>()
             .register_inspectable::<MultipleSided>()
+            .register_inspectable::<Relationships>()
+            .register_type::<Desire>()
             .register_type::<MultipleMovementState>();
     }
 }
