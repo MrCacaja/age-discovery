@@ -12,7 +12,7 @@ use bevy_pixel_camera::PixelCameraPlugin;
 use crate::modules::camera::systems::camera_follow;
 use crate::modules::init::systems::{DebugPlugin, setup_game};
 use crate::modules::input::systems::read_input;
-use crate::modules::living::components::{MobBundle, PlayerBundle};
+use crate::modules::living::components::{ElfBundle, GoblinBundle, MobBundle, PlayerBundle};
 use crate::modules::living::systems::{update_desire, update_mob_direction};
 use crate::modules::physics::sprite_change::systems::{overlap_sprite_zones, sync_self_physical_multiple_movement, update_movement_sided_sprite, update_sided_sprite};
 use crate::modules::physics::systems::{collider_direction_react, direction_react, update_movement_state_by_direction, update_sideds_by_direction};
@@ -37,7 +37,8 @@ fn main() {
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<TreeStumpBundle>("Tree_Stump")
         .register_ldtk_entity::<RockBundle>("Rock")
-        .register_ldtk_entity::<MobBundle>("Elf")
+        .register_ldtk_entity::<ElfBundle>("Elf")
+        .register_ldtk_entity::<GoblinBundle>("Goblin")
         .add_startup_system(setup_game)
         .add_system(read_input)
         .add_system(on_sound_emit)

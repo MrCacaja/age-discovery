@@ -16,12 +16,13 @@ impl From<EntityInstance> for Physical {
     fn from(entity_instance: EntityInstance) -> Physical {
         match entity_instance.identifier.as_str() {
             "Player" | "Elf" => Physical { weight: 2.5, ..default() },
+            "Goblin" => Physical { weight: 1., ..default() },
             _ => Physical {..default()}
         }
     }
 }
 
-#[derive(Inspectable)]
+#[derive(Inspectable, Default)]
 pub struct TransformZone {
     pub size: Vec2,
     pub offset: Vec2
@@ -40,6 +41,7 @@ impl From<EntityInstance> for Collider {
     fn from(entity_instance: EntityInstance) -> Collider {
         match entity_instance.identifier.as_str() {
             "Player" | "Elf" => Collider(TransformZone {size: Vec2::new(16., 4.5), offset: Vec2::new(0., -8.)}),
+            "Goblin" => Collider(TransformZone {size: Vec2::new(16., 2.25), offset: Vec2::new(0., 0.)}),
             "Rock" => Collider(TransformZone {size: Vec2::new(28., 20.), offset: Vec2::new(-6., -8.)}),
             _ => Collider {..default()}
         }
@@ -57,6 +59,7 @@ impl From<EntityInstance> for SelfPhysical {
     fn from(entity_instance: EntityInstance) -> SelfPhysical {
         match entity_instance.identifier.as_str() {
             "Player" | "Elf" => SelfPhysical { speed: 50., ..default() },
+            "Goblin" => SelfPhysical { speed: 75., ..default() },
             _ => SelfPhysical {..default()}
         }
     }

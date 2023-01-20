@@ -2,7 +2,7 @@ use bevy::math::{Vec2, Vec3};
 use bevy::prelude::{Mut, Query, Res, ResMut, Transform};
 use bevy::time::Time;
 use rand::Rng;
-use crate::modules::living::components::{Desire, Intention};
+use crate::modules::living::components::{AggressionZone, Desire, Intention};
 use crate::modules::physics::components::SelfPhysical;
 use crate::modules::rng::components::RngResource;
 
@@ -18,6 +18,13 @@ pub fn update_mob_direction(mut mobs: Query<(&Desire, &mut SelfPhysical, &Transf
                 self_physical.direction = Vec3::ZERO;
             }
         }
+    }
+}
+
+pub fn check_aggression_zone(mut mobs: Query<(&mut Desire, &AggressionZone, &Transform)>) {
+    let mut combinations = mobs.iter_combinations_mut();
+    while let Some([(a_desire, a_aggresion_zone, a_transform), (b_desire, b_aggresion_zone, b_transform)]) = combinations.fetch_next() {
+
     }
 }
 
